@@ -37,28 +37,41 @@ def save_baseline(hashes):
         json.dump(hashes, f, indent=4)
 
 
+def run_check(directory_path):
+    print("Not implemented yet")
+
+def run_init(directory_path):
+    print("Not implemented yet")
+
+
 # Main function
 def main():
     print(f"{PROJECT_NAME} v{VERSION}")
     print(f"Active: {IS_ACTIVE}")
     print()
 
-    if len(sys.argv) < 2:
-        print("\nUsage: python3 src/monitor.py <directory_path>", file=sys.stderr)
+    command = sys.argv[1]   
+
+    if len(sys.argv) < 3:
+        print("\nUsage: python3 src/monitor.py <command> <directory_path>", file=sys.stderr)
+        print(f"\n Commands: 'init' or 'check' ")
         sys.exit(1)
-
-    directory_path = sys.argv[1]
-
+   
+    directory_path = sys.argv[2]
+        
     if not os.path.isdir(directory_path):
-        print(f"\nError '{directory_path}' is not valid.",file=sys.stderr)
+        print(f"\ERROR '{directory_path}' is not known path.",file=sys.stderr)
         sys.exit(1)
 
-    hashes = scan_directory(directory_path)
-    for file_path, sha256_hash in hashes.items():
-        print(f"\nHash of '{file_path}': {sha256_hash}")
-
-    save_baseline(hashes)
-    print("\nFiles saved: " , len(hashes))
+    if command == "init":
+        run_init(directory_path)
+    elif command == "check":
+        run_check(directory_path)
+    else:
+        print("\nUsage: python3 src/monitor.py <command> <directory_path>", file=sys.stderr)
+        print(f"ERROR: unknown command '{command}'. Use 'init' or 'check' ", file=sys.stderr)
+        sys.exit(1)
+        
 
 if __name__ == "__main__":
     main()
