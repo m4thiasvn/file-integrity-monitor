@@ -1,5 +1,6 @@
 import hashlib
 import sys
+import os
 
 # File Integrity Monitor
 
@@ -19,6 +20,15 @@ def calculate_sha256(file_path):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
 
+# Scan a directory and return a dictionary of file paths and their corresponding SHA-256 hashes.
+def scan_directory(directory_path):
+    hashes = {}
+    for root, dirs, files in os.walk(directory_path):
+        for name in files:
+            full_path = os.path.join(root, name)
+            hashes[full_path] = calculate_sha256(full_path)
+    return hashes
+
 # Main function
 def main():
     print(f"{PROJECT_NAME} v{VERSION}")
@@ -26,17 +36,18 @@ def main():
     print()
 
     if len(sys.argv) < 2:
-        print("\nUsage: python3 src/monitor.py <file_path>", file=sys.stderr)
+        print("\nUsage: python3 src/monitor.py <directory_path>", file=sys.stderr)
         sys.exit(1)
 
-    file_path = sys.argv[1]
+    directory_path = sys.argv[1]
 
-    try:
-        hash_value = calculate_sha256(file_path)
-        print(f"\nSHA-256 Hash of '{file_path}': {hash_value}")
-    except FileNotFoundError:
-        print(f"\nError: File '{file_path}' not found.", file=sys.stderr)
+    if not os.path.isdir(directory_path):
+        print(f"\nError '{directory_path}' is not valid.", file=sys.stderr)
         sys.exit(1)
+
+    hashes = scan_directory(directory_path)
+    for file_path, sha256_hash in hashes.items():
+        print(f"\nHash of '{file_path}': {sha256_hash}")
 
 if __name__ == "__main__":
     main()
