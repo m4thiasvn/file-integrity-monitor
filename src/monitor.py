@@ -1,6 +1,7 @@
 import hashlib
 import sys
 import os
+import json
 
 # File Integrity Monitor
 
@@ -10,6 +11,7 @@ IS_ACTIVE = True
 
 
 CHUNK_SIZE = 65536  # 64KB
+BASELINE_FILE = "baseline.json"
 
 # Calculate the SHA-256 hash of a file.
 def calculate_sha256(file_path):
@@ -29,6 +31,12 @@ def scan_directory(directory_path):
             hashes[full_path] = calculate_sha256(full_path)
     return hashes
 
+# Save the hashes in a json file
+def save_baseline(hashes):
+    with open(BASELINE_FILE, "w") as f:
+        json.dump(hashes, f, indent=4)
+
+
 # Main function
 def main():
     print(f"{PROJECT_NAME} v{VERSION}")
@@ -42,12 +50,15 @@ def main():
     directory_path = sys.argv[1]
 
     if not os.path.isdir(directory_path):
-        print(f"\nError '{directory_path}' is not valid.", file=sys.stderr)
+        print(f"\nError '{directory_path}' is not valid.",file=sys.stderr)
         sys.exit(1)
 
     hashes = scan_directory(directory_path)
     for file_path, sha256_hash in hashes.items():
         print(f"\nHash of '{file_path}': {sha256_hash}")
+
+    save_baseline(hashes)
+    print("\nFiles saved: " , len(hashes))
 
 if __name__ == "__main__":
     main()
