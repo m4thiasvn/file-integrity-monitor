@@ -36,39 +36,79 @@ def save_baseline(hashes):
     with open(BASELINE_FILE, "w") as f:
         json.dump(hashes, f, indent=4)
 
+# Load and reads the BASELINE_FILE
+def load_baseline(baseline_path):    
+    with open(baseline_path, "r") as f:
+        return json.load(f)  
 
-def run_check(directory_path):
-    print("Not implemented yet")
-
+# Runs the scan_directory and the save_baseline by the command init
 def run_init(directory_path):
-    print("Not implemented yet")
+    hashes = scan_directory(directory_path)
+    save_baseline(hashes)
+    print(f"\nFiles saved ",len(hashes))
 
+# Runs the scan_directory and load_baseline by the command check
+def run_check(directory_path):
+    try:
+        baseline_hashes = load_baseline(BASELINE_FILE)
+    except FileNotFoundError:
+        print(f"ERROR: '{BASELINE_FILE}' not found. Run 'init' first.", file=sys.stderr) 
+        sys.exit(1)
 
+    current_hashes = scan_directory(directory_path)
+
+    baseline_files = set (baseline_hashes.keys())
+    current_files = set (current_hashes.keys())
+    new_files = current_files - baseline_files
+    deleted_files = baseline_files - current_files
+    modified_files = {
+        path for path in baseline_files & current_files
+        if baseline_hashes[path] != current_hashes[path]
+    }
+
+    if not new_files and not deleted_files and not modified_files:
+        print("No changes detected")
+    else:
+        if new_files:
+            print("\nNew files:")
+            for path in sorted(new_files):
+                print(f"  {path}")
+        
+        if deleted_files:
+            print("\nDeleted files:")
+            for path in sorted(deleted_files):
+                print(f"  {path}")
+        if modified_files:
+            print("\nModified files:")
+            for path in sorted(modified_files):
+                print(f"  {path}")
+
+    if new_files or deleted_files or modified_files:
+        sys.exit(1)
+        
+    
 # Main function
 def main():
     print(f"{PROJECT_NAME} v{VERSION}")
-    print(f"Active: {IS_ACTIVE}")
-    print()
-
-    command = sys.argv[1]   
+    print(f"Active: {IS_ACTIVE}\n")
 
     if len(sys.argv) < 3:
         print("\nUsage: python3 src/monitor.py <command> <directory_path>", file=sys.stderr)
-        print(f"\n Commands: 'init' or 'check' ")
+        print("\nCommands: 'init' or 'check' ")
         sys.exit(1)
-   
+
+    command = sys.argv[1]   
     directory_path = sys.argv[2]
         
     if not os.path.isdir(directory_path):
-        print(f"\ERROR '{directory_path}' is not known path.",file=sys.stderr)
-        sys.exit(1)
+       print(f"ERROR: '{directory_path}' is not a known path.", file=sys.stderr)
+       sys.exit(1)
 
     if command == "init":
         run_init(directory_path)
     elif command == "check":
         run_check(directory_path)
     else:
-        print("\nUsage: python3 src/monitor.py <command> <directory_path>", file=sys.stderr)
         print(f"ERROR: unknown command '{command}'. Use 'init' or 'check' ", file=sys.stderr)
         sys.exit(1)
         
