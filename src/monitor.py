@@ -12,6 +12,7 @@ IS_ACTIVE = True
 
 CHUNK_SIZE = 65536  # 64KB
 BASELINE_FILE = "baseline.json"
+IGNORED_FILES = {".DS_Store", "baseline.json"}
 
 # Calculate the SHA-256 hash of a file.
 def calculate_sha256(file_path):
@@ -26,9 +27,14 @@ def calculate_sha256(file_path):
 def scan_directory(directory_path):
     hashes = {}
     for root, dirs, files in os.walk(directory_path):
-        for name in files:
-            full_path = os.path.join(root, name)
-            hashes[full_path] = calculate_sha256(full_path)
+            for name in files:
+                if name in IGNORED_FILES:
+                    continue
+                try:
+                    full_path = os.path.join(root, name)    
+                    hashes[full_path] = calculate_sha256(full_path)
+                except PermissionError:
+                    print(f"WARNING: Skipping unreadable file: {full_path}", file=sys.stderr)
     return hashes
 
 # Save the hashes in a json file
